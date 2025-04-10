@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { GigForm } from '@/components/calendar/gig-form';
 import { CalendarView } from '@/components/calendar/calendar-view';
 import { Plus } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 export default function CalendarPage() {
   const [location, navigate] = useLocation();
@@ -148,6 +148,9 @@ export default function CalendarPage() {
       {/* Gig Form Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[700px]">
+          <DialogTitle className="sr-only">
+            {selectedGigId ? 'Edit Gig' : 'Add New Gig'}
+          </DialogTitle>
           <GigForm
             gigId={selectedGigId}
             onSuccess={handleCloseForm}

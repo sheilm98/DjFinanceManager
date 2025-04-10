@@ -20,16 +20,20 @@ import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Extend the insert schema with additional validations
-const gigFormSchema = insertGigSchema
-  .omit({ userId: true, createdAt: true })
-  .extend({
-    date: z.date({
-      required_error: "A date is required",
-    }),
-    startTime: z.string().optional(),
-    endTime: z.string().optional(),
-    fee: z.string().transform((val) => parseFloat(val)).optional()
-  });
+// Define the full schema with all fields needed in the form
+const gigFormSchema = z.object({
+  title: z.string().min(2, { message: "Title must be at least 2 characters" }),
+  date: z.date({
+    required_error: "A date is required",
+  }),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  location: z.string().optional(),
+  fee: z.coerce.number().optional(),
+  notes: z.string().optional(),
+  clientId: z.number().optional(),
+  reminderSet: z.boolean().default(true),
+});
 
 type GigFormValues = z.infer<typeof gigFormSchema>;
 
@@ -60,9 +64,10 @@ export function GigForm({ gigId, onSuccess }: GigFormProps) {
       startTime: '',
       endTime: '',
       location: '',
-      fee: '' as any,
+      fee: undefined,
       notes: '',
       reminderSet: true,
+      clientId: undefined,
     },
   });
   
@@ -75,10 +80,10 @@ export function GigForm({ gigId, onSuccess }: GigFormProps) {
         startTime: gig.startTime || '',
         endTime: gig.endTime || '',
         location: gig.location || '',
-        fee: gig.fee ? gig.fee.toString() : '',
+        fee: gig.fee || undefined,
         notes: gig.notes || '',
-        clientId: gig.clientId,
-        reminderSet: gig.reminderSet,
+        clientId: gig.clientId || undefined,
+        reminderSet: gig.reminderSet ?? true,
       });
     }
   }, [gig, form]);
@@ -190,8 +195,8 @@ export function GigForm({ gigId, onSuccess }: GigFormProps) {
                   <FormItem>
                     <FormLabel>Client/Promoter</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(parseInt(value))}
-                      value={field.value?.toString()}
+                      onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}
+                      value={field.value?.toString() || undefined}
                       disabled={isLoading}
                     >
                       <FormControl>
@@ -200,11 +205,17 @@ export function GigForm({ gigId, onSuccess }: GigFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {clients?.map((client) => (
-                          <SelectItem key={client.id} value={client.id.toString()}>
-                            {client.name}
+                        {clients && clients.length > 0 ? (
+                          clients.map((client) => (
+                            <SelectItem key={client.id} value={client.id.toString()}>
+                              {client.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-clients" disabled>
+                            No clients available
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
