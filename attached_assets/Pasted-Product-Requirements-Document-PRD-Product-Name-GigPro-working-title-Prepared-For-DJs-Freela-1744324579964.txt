@@ -1,0 +1,202 @@
+Product Requirements Document (PRD)
+
+Product Name: GigPro (working title)
+
+Prepared For: DJs, Freelancers, and Gig Performers
+
+Objective:
+To provide DJs and other freelance performers with a professional, intuitive mobile application for managing gigs, generating invoices, and ensuring timely payments with integrated calendar and reminder functionalities.
+
+1. User Personas
+
+Primary Persona:
+
+Name: DJ Blaze
+
+Age: 28
+
+Profession: Freelance DJ
+
+Needs: Create and send invoices quickly, keep track of gigs, set payment reminders
+
+Secondary Personas:
+
+Live performers (e.g., musicians, emcees)
+
+Freelancers in event-related industries
+
+2. Features & Requirements
+
+2.1 Authentication & Onboarding
+
+Sign up/Login via Email, Google, Apple
+
+Onboarding wizard to set up:
+
+Display name/stage name
+
+Business details
+
+Default invoice settings
+
+Payment method
+
+2.2 Dashboard
+
+Overview of:
+
+Upcoming gigs (next 7 days)
+
+Outstanding invoices
+
+Reminders for follow-ups
+
+Quick actions:
+
+Add new gig
+
+Create invoice
+
+View calendar
+
+2.3 Calendar
+
+Monthly/weekly calendar view
+
+Add/edit/delete gigs
+
+Gig data fields:
+
+Event Name
+
+Date & Time
+
+Location
+
+Client/Promoter
+
+Fee
+
+Notes
+
+Set invoice reminder (default 14 days post-gig)
+
+2.4 Invoice Generator
+
+Create Invoice:
+
+Auto-populate from gig
+
+Add line items
+
+Add tax/discounts
+
+Add payment terms & notes
+
+Custom due date
+
+Upload logo or use default
+
+Preview & Share:
+
+PDF preview
+
+Email invoice
+
+Shareable invoice link
+
+Invoice Tracking:
+
+Draft / Sent / Paid / Overdue
+
+Manual payment update
+
+(Optional) Stripe/PayPal integration
+
+2.5 Reminders & Notifications
+
+App and email notifications for:
+
+Upcoming gigs
+
+Invoice due soon
+
+Payment overdue
+
+2.6 Client Management
+
+Save client details:
+
+Name
+
+Email & Phone
+
+Address
+
+Past gigs
+
+Notes/tags
+
+2.7 Settings
+
+Profile management
+
+Payment method setup
+
+Notification preferences
+
+Export data (CSV, PDF)
+
+Invoice template customization
+
+3. Technical Stack
+
+Frontend: React Native
+
+Backend: Firebase (Authentication, Firestore, Functions, Notifications)
+
+Invoice Engine: React-PDF or similar
+
+Calendar Component: Native or FullCalendar with React integration
+
+Email Delivery: SendGrid or Firebase + Email APIs
+
+Optional Payments: Stripe, PayPal
+
+4. Wireframes (To Be Designed)
+
+Login / Onboarding
+
+Dashboard
+
+Calendar View
+
+Add/Edit Gig
+
+Create Invoice
+
+Invoice Preview & Send
+
+Client List & Details
+
+Settings
+
+5. Success Metrics
+
+Daily/weekly active users
+
+Number of invoices created/sent
+
+Invoices marked paid within 14 days
+
+Retention over 30/60 days
+
+6. Other features/Ideas
+
+Income & expense analytics
+
+Contract generator
+
+Collaborator access for managers
+
+Multi-language & multi-currency support

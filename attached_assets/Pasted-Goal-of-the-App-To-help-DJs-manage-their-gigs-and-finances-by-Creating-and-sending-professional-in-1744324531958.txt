@@ -1,0 +1,163 @@
+Goal of the App
+To help DJs manage their gigs and finances by:
+
+Creating and sending professional invoices
+
+Tracking upcoming shows/gigs via a calendar
+
+Setting and managing payment reminders post-gig
+
+🔧 Core Features
+We'll break it into functional modules and then go into screen-level design:
+
+1. Authentication & Onboarding
+Login / Sign Up (email + social logins)
+
+User Profile Setup
+
+DJ/Stage Name
+
+Business Details (tax ID, company name if any)
+
+Default payment terms (e.g., 14 days)
+
+Preferred payment method (bank transfer, PayPal, etc.)
+
+2. Dashboard / Home
+Quick view of:
+
+Upcoming gigs
+
+Pending invoices
+
+Payment reminders (overdue/soon)
+
+CTA buttons:
+
+Create Invoice
+
+Add Gig
+
+View Calendar
+
+3. Gig Calendar
+Monthly/Weekly View
+
+Add/Edit/Delete gigs
+
+Fields: Event Name, Date, Time, Location, Client/Promoter Name, Fee, Notes
+
+Option to "Generate Invoice" linked to gig details
+
+Toggle "Reminder" (auto sets 14-day post-gig notification unless customized)
+
+4. Invoice Generator
+Create Invoice Screen
+
+Select gig or create new
+
+Autofill: Date of service, client, fee
+
+Add line items (if needed)
+
+Tax/Discount fields
+
+Due date (default 14 days, editable)
+
+Notes section (e.g., payment terms)
+
+Attach signature/logo
+
+Invoice Preview
+
+Send Invoice
+
+Email/PDF sharing
+
+Copy link
+
+Invoice Status
+
+Draft / Sent / Paid / Overdue
+
+Manually mark as paid or integrate lightweight payment tracking (e.g., via Stripe/PayPal)
+
+5. Reminders & Notifications
+Push/email reminders:
+
+“Upcoming gig tomorrow”
+
+“Invoice due in 3 days”
+
+“Payment overdue”
+
+6. Clients/Promoters Manager (Optional)
+Directory of contacts with:
+
+Name, Email, Phone
+
+Past gigs/invoices associated
+
+Notes/tags (e.g., “slow payer,” “repeat client”)
+
+7. Settings
+Profile settings
+
+Payment info
+
+Customize default invoice template
+
+Notification preferences
+
+Data export (CSV/PDF)
+
+💡 Optional Future Features
+Expense tracking (e.g., travel, accommodation)
+
+Income dashboard/analytics
+
+Contract templates
+
+Multi-currency and timezone support for international DJs
+
+Collaborator access (e.g., if DJ has a manager)
+
+📱 UX/UI Flow (Pages/Screens Overview)
+Welcome + Auth
+
+Onboarding Profile Setup
+
+Home Dashboard
+
+Calendar View
+
+Gig Details / Add Gig
+
+Invoice List
+
+Invoice Creation / Edit / Preview
+
+Client/Promoter List
+
+Settings & Preferences
+
+🧱 Tech Recommendations
+Frontend (App): React Native (cross-platform)
+
+Backend: Firebase (auth + Firestore for data + Cloud Functions for reminders)
+
+PDF Generation: React-PDF or cloud PDF services
+
+Calendar: FullCalendar (with React integration) or native calendar components
+
+Emailing Invoices: SendGrid or Firebase Functions with email services
+
+🎨 UI/UX Design Notes
+Keep it slick and minimal (DJs prefer aesthetic and intuitive tools)
+
+Dark mode as default (industry vibe)
+
+Use visual badges/tags for invoice status
+
+Calendar should support drag-and-drop (future phase)
+
