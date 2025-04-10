@@ -63,7 +63,8 @@ export class MemStorage implements IStorage {
     this.invoiceId = 1;
     
     // Add sample user for development
-    this.createUser({
+    const testUser: User = {
+      id: this.userId++,
       email: "test@example.com",
       password: "password", // In a real app, this would be hashed
       stageName: "DJ Blaze",
@@ -75,8 +76,44 @@ export class MemStorage implements IStorage {
       website: "https://djblaze.com",
       paymentTerms: "Net 14 days",
       paymentMethod: "Bank Transfer",
-      paymentInstructions: "Please transfer the full amount to:\nAccount Name: Blaze Entertainment LLC\nBank: First National Bank\nAccount: XXXX-XXXX-XXXX-1234\nRouting: XXXXXXXXX"
-    });
+      paymentInstructions: "Please transfer the full amount to:\nAccount Name: Blaze Entertainment LLC\nBank: First National Bank\nAccount: XXXX-XXXX-XXXX-1234\nRouting: XXXXXXXXX",
+      createdAt: new Date()
+    };
+    this.users.set(testUser.id, testUser);
+    
+    // Add a sample client for our test user
+    const sampleClient: Client = {
+      id: this.clientId++,
+      userId: testUser.id,
+      name: "Groove Lounge",
+      email: "bookings@groovelounge.com",
+      phone: "(555) 987-6543",
+      type: "Nightclub",
+      notes: "Regular weekly gig every Friday. Contact manager Lucy for setup details.",
+      tags: ["nightclub", "regular", "friday"],
+      createdAt: new Date()
+    };
+    this.clients.set(sampleClient.id, sampleClient);
+    
+    // Add a sample gig for the user
+    const nextFriday = new Date();
+    nextFriday.setDate(nextFriday.getDate() + (5 + 7 - nextFriday.getDay()) % 7);
+    
+    const sampleGig: Gig = {
+      id: this.gigId++,
+      userId: testUser.id,
+      clientId: sampleClient.id,
+      title: "Friday Night at Groove Lounge",
+      date: nextFriday,
+      startTime: "21:00",
+      endTime: "02:00",
+      location: "123 Beat Street, Downtown",
+      fee: 350,
+      notes: "Bring extra controller. VIP event - dress code is black attire.",
+      reminderSet: true,
+      createdAt: new Date()
+    };
+    this.gigs.set(sampleGig.id, sampleGig);
   }
   
   // User methods

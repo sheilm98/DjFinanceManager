@@ -195,7 +195,13 @@ export function GigForm({ gigId, onSuccess }: GigFormProps) {
                   <FormItem>
                     <FormLabel>Client/Promoter</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}
+                      onValueChange={(value) => {
+                        if (value && value !== "no-clients") {
+                          field.onChange(parseInt(value));
+                        } else {
+                          field.onChange(undefined);
+                        }
+                      }}
                       value={field.value?.toString() || undefined}
                       disabled={isLoading}
                     >
@@ -315,8 +321,10 @@ export function GigForm({ gigId, onSuccess }: GigFormProps) {
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
+                      checked={field.value === true}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked === true);
+                      }}
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
