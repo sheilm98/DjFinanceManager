@@ -5,23 +5,26 @@ import { insertUserSchema, insertClientSchema, insertGigSchema, insertInvoiceSch
 import session from "express-session";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import MemoryStore from "memorystore";
+import pgSession from "connect-pg-simple";
+import { pool } from "./db"; // Import the pool from our db file
 import crypto from 'crypto';
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  const MemoryStoreSession = MemoryStore(session);
+  const PgStore = pgSession(session);
   const SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 
   // Setup session
   app.use(
     session({
+      store: new PgStore({
+        pool,
+        tableName: 'session', // Session table name
+        createTableIfMissing: true, // Create the table if it doesn't exist
+      }),
       secret: SECRET,
       resave: false,
       saveUninitialized: false,
       cookie: { secure: process.env.NODE_ENV === "production", maxAge: 24 * 60 * 60 * 1000 },
-      store: new MemoryStoreSession({
-        checkPeriod: 86400000, // prune expired entries every 24h
-      }),
     })
   );
 
