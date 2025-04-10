@@ -1,4 +1,5 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, json } from "drizzle-orm/pg-core"; 
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -60,6 +61,49 @@ export const invoices = pgTable("invoices", {
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow()
 });
+
+// Define relations
+export const usersRelations = relations(users, ({ many }) => ({
+  clients: many(clients),
+  gigs: many(gigs),
+  invoices: many(invoices)
+}));
+
+export const clientsRelations = relations(clients, ({ one, many }) => ({
+  user: one(users, {
+    fields: [clients.userId],
+    references: [users.id]
+  }),
+  gigs: many(gigs),
+  invoices: many(invoices)
+}));
+
+export const gigsRelations = relations(gigs, ({ one, many }) => ({
+  user: one(users, {
+    fields: [gigs.userId],
+    references: [users.id]
+  }),
+  client: one(clients, {
+    fields: [gigs.clientId],
+    references: [clients.id]
+  }),
+  invoices: many(invoices)
+}));
+
+export const invoicesRelations = relations(invoices, ({ one }) => ({
+  user: one(users, {
+    fields: [invoices.userId],
+    references: [users.id]
+  }),
+  client: one(clients, {
+    fields: [invoices.clientId],
+    references: [clients.id]
+  }),
+  gig: one(gigs, {
+    fields: [invoices.gigId],
+    references: [gigs.id]
+  })
+}));
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true });

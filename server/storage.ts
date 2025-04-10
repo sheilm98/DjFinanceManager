@@ -5,6 +5,7 @@ import {
   invoices, type Invoice, type InsertInvoice,
   type InvoiceStatus
 } from "@shared/schema";
+import { eq, and, gte, lte, asc, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -265,4 +266,8 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Import the real DatabaseStorage implementation
+import { DatabaseStorage } from './database-storage';
+
+// Use DatabaseStorage for persistence
+export const storage = new DatabaseStorage();
