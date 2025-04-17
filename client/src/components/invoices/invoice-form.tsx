@@ -576,8 +576,8 @@ export function InvoiceForm({ invoiceId, gigId, onSuccess }: InvoiceFormProps) {
                           <tr key={index} className="border-b">
                             <td className="px-4 py-3">{item.description}</td>
                             <td className="px-4 py-3 text-right">{item.quantity}</td>
-                            <td className="px-4 py-3 text-right">${item.rate.toFixed(2)}</td>
-                            <td className="px-4 py-3 text-right font-mono">${item.amount.toFixed(2)}</td>
+                            <td className="px-4 py-3 text-right">${typeof item.rate === 'number' ? item.rate.toFixed(2) : '0.00'}</td>
+                            <td className="px-4 py-3 text-right font-mono">${typeof item.amount === 'number' ? item.amount.toFixed(2) : '0.00'}</td>
                           </tr>
                         ))}
                       </tbody>

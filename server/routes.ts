@@ -264,10 +264,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/gigs', isAuthenticated, async (req, res) => {
     try {
       const userId = (req.user as any).id;
-      const validatedData = insertGigSchema.parse({ ...req.body, userId });
+      const formData = { ...req.body, userId };
+      
+      // Convert date string to Date object if it's a string
+      if (formData.date && typeof formData.date === 'string') {
+        formData.date = new Date(formData.date);
+      }
+      
+      const validatedData = insertGigSchema.parse(formData);
       const gig = await storage.createGig(validatedData);
       res.status(201).json(gig);
     } catch (error: any) {
+      console.error('Gig creation error:', error);
       res.status(400).json({ message: error.message });
     }
   });
@@ -285,9 +293,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Unauthorized" });
       }
       
-      const updatedGig = await storage.updateGig(gigId, req.body);
+      const formData = { ...req.body };
+      
+      // Convert date string to Date object if it's a string
+      if (formData.date && typeof formData.date === 'string') {
+        formData.date = new Date(formData.date);
+      }
+      
+      const updatedGig = await storage.updateGig(gigId, formData);
       res.json(updatedGig);
     } catch (error: any) {
+      console.error('Gig update error:', error);
       res.status(400).json({ message: error.message });
     }
   });
@@ -363,10 +379,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/invoices', isAuthenticated, async (req, res) => {
     try {
       const userId = (req.user as any).id;
-      const validatedData = insertInvoiceSchema.parse({ ...req.body, userId });
+      const formData = { ...req.body, userId };
+      
+      // Convert date strings to Date objects
+      if (formData.issuedDate && typeof formData.issuedDate === 'string') {
+        formData.issuedDate = new Date(formData.issuedDate);
+      }
+      if (formData.dueDate && typeof formData.dueDate === 'string') {
+        formData.dueDate = new Date(formData.dueDate);
+      }
+      
+      const validatedData = insertInvoiceSchema.parse(formData);
       const invoice = await storage.createInvoice(validatedData);
       res.status(201).json(invoice);
     } catch (error: any) {
+      console.error('Invoice creation error:', error);
       res.status(400).json({ message: error.message });
     }
   });
@@ -384,9 +411,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Unauthorized" });
       }
       
-      const updatedInvoice = await storage.updateInvoice(invoiceId, req.body);
+      const formData = { ...req.body };
+      
+      // Convert date strings to Date objects
+      if (formData.issuedDate && typeof formData.issuedDate === 'string') {
+        formData.issuedDate = new Date(formData.issuedDate);
+      }
+      if (formData.dueDate && typeof formData.dueDate === 'string') {
+        formData.dueDate = new Date(formData.dueDate);
+      }
+      
+      const updatedInvoice = await storage.updateInvoice(invoiceId, formData);
       res.json(updatedInvoice);
     } catch (error: any) {
+      console.error('Invoice update error:', error);
       res.status(400).json({ message: error.message });
     }
   });
