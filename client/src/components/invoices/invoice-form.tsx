@@ -65,6 +65,11 @@ export function InvoiceForm({ invoiceId, gigId, onSuccess }: InvoiceFormProps) {
     queryKey: ['/api/gigs'],
   });
   
+  // Fetch current user for logo and business info
+  const { data: currentUser, isLoading: userLoading } = useQuery({
+    queryKey: ['/api/auth/user'],
+  });
+  
   // Fetch invoice if editing
   const { data: invoice, isLoading: invoiceLoading } = useQuery<Invoice>({
     queryKey: ['/api/invoices', invoiceId],
@@ -210,7 +215,7 @@ export function InvoiceForm({ invoiceId, gigId, onSuccess }: InvoiceFormProps) {
     }
   };
   
-  const isLoading = clientsLoading || gigsLoading || (invoiceId && invoiceLoading) || (gigId && gigLoading);
+  const isLoading = userLoading || clientsLoading || gigsLoading || (invoiceId && invoiceLoading) || (gigId && gigLoading);
   const isSubmitting = createInvoiceMutation.isPending || updateInvoiceMutation.isPending;
   
   return (
@@ -532,14 +537,22 @@ export function InvoiceForm({ invoiceId, gigId, onSuccess }: InvoiceFormProps) {
                   <div className="flex flex-col md:flex-row justify-between mb-8">
                     <div>
                       <div className="flex items-center mb-4">
-                        <div className="w-12 h-12 bg-primary rounded-md flex items-center justify-center text-white font-bold">
-                          GP
-                        </div>
-                        <span className="ml-3 text-xl font-bold">GigPro</span>
+                        {currentUser?.logoUrl ? (
+                          <img 
+                            src={currentUser.logoUrl} 
+                            alt="Company Logo" 
+                            className="w-12 h-12 object-contain rounded-md"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-primary rounded-md flex items-center justify-center text-white font-bold">
+                            GP
+                          </div>
+                        )}
+                        <span className="ml-3 text-xl font-bold">{currentUser?.businessName || 'GigPro'}</span>
                       </div>
                       <div className="text-sm mb-1">From:</div>
-                      <div className="font-medium">{form.getValues('clientId') ? clients?.find(c => c.id === form.getValues('clientId'))?.name : 'Your DJ Name'}</div>
-                      <div className="text-sm text-muted-foreground">Your contact information</div>
+                      <div className="font-medium">{currentUser?.name || 'Your DJ Name'}</div>
+                      <div className="text-sm text-muted-foreground">{currentUser?.email}</div>
                     </div>
                     <div className="mt-6 md:mt-0 text-right">
                       <div className="text-2xl font-bold mb-2">INVOICE</div>

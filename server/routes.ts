@@ -8,8 +8,37 @@ import { Strategy as LocalStrategy } from "passport-local";
 import pgSession from "connect-pg-simple";
 import { pool } from "./db"; // Import the pool from our db file
 import crypto from 'crypto';
+import path from 'path';
+import fs from 'fs';
+import fileUpload from 'express-fileupload';
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Create upload directory if it doesn't exist
+  const uploadsDir = path.resolve('./uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  // Set up static file serving for uploads
+  app.use('/uploads', (req, res, next) => {
+    // Manually serve files from uploadsDir
+    const filePath = path.join(uploadsDir, req.url);
+    fs.access(filePath, fs.constants.F_OK, (err) => {
+      if (err) {
+        next();
+      } else {
+        res.sendFile(filePath);
+      }
+    });
+  });
+
+  // Set up file upload middleware
+  app.use(fileUpload({
+    createParentPath: true,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    abortOnLimit: true,
+  }));
+
   const PgStore = pgSession(session);
   const SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 
@@ -132,6 +161,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(userWithoutPassword);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
+    }
+  });
+  
+  // Logo upload route
+  app.post('/api/user/logo', isAuthenticated, async (req, res) => {
+    try {
+      if (!req.files || !req.files.logo) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      
+      const user = req.user as any;
+      const logoFile = req.files.logo as any;
+      
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/svg+xml', 'image/gif'];
+      if (!allowedTypes.includes(logoFile.mimetype)) {
+        return res.status(400).json({ message: "Invalid file type. Only JPEG, PNG, SVG, and GIF are allowed." });
+      }
+      
+      // Create a unique filename
+      const timestamp = Date.now();
+      const ext = path.extname(logoFile.name);
+      const filename = `logo_${user.id}_${timestamp}${ext}`;
+      const uploadPath = path.join(uploadsDir, filename);
+      
+      // Move the file to the uploads directory
+      await logoFile.mv(uploadPath);
+      
+      // Update the user's logoUrl
+      const logoUrl = `/uploads/${filename}`;
+      const updatedUser = await storage.updateUser(user.id, { logoUrl });
+      
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update user with logo URL" });
+      }
+      
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json({ ...userWithoutPassword, logoUrl });
+    } catch (error: any) {
+      console.error('Logo upload error:', error);
+      res.status(500).json({ message: error.message || "Error uploading logo" });
     }
   });
 
