@@ -17,6 +17,7 @@ export const users = pgTable("users", {
   paymentTerms: text("payment_terms").default("Net 14 days"),
   paymentMethod: text("payment_method").default("Bank Transfer"),
   paymentInstructions: text("payment_instructions"),
+  logoUrl: text("logo_url"),
   createdAt: timestamp("created_at").defaultNow()
 });
 
