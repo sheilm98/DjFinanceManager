@@ -386,7 +386,7 @@ export function InvoiceForm({ invoiceId, gigId, onSuccess }: InvoiceFormProps) {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">None</SelectItem>
+                            <SelectItem value="0">None</SelectItem>
                             {gigs?.map((gig) => (
                               <SelectItem key={gig.id} value={gig.id.toString()}>
                                 {gig.title} - {format(new Date(gig.date), 'MMM d, yyyy')}
