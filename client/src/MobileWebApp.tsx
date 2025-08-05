@@ -224,24 +224,47 @@ const mockSecureStore = {
 (window as any).ExpoVectorIcons = mockExpoVectorIcons;
 (window as any).SecureStore = mockSecureStore;
 
+// Mock data for comprehensive features
+const mockData = {
+  clients: [
+    { id: 1, name: 'Paradise Beach Club', email: 'events@paradisebeach.com', phone: '+1 555-0123', type: 'Venue', notes: 'Regular client, pays on time', tags: ['repeat-client', 'venue'] },
+    { id: 2, name: 'Sarah Johnson', email: 'sarah.j@email.com', phone: '+1 555-0456', type: 'Private', notes: 'Wedding DJ services', tags: ['private-events'] },
+    { id: 3, name: 'Downtown Events Ltd', email: 'booking@downtownevents.com', phone: '+1 555-0789', type: 'Promoter', notes: 'Corporate events specialist', tags: ['promoter', 'corporate'] }
+  ],
+  gigs: [
+    { id: 1, clientId: 1, title: 'Saturday Night Dance', date: '2025-01-18', startTime: '22:00', endTime: '03:00', location: 'Paradise Beach Club, Miami', fee: 800, status: 'confirmed' },
+    { id: 2, clientId: 2, title: 'Wedding Reception', date: '2025-01-25', startTime: '19:00', endTime: '24:00', location: 'Garden Hotel Ballroom', fee: 1200, status: 'confirmed' },
+    { id: 3, clientId: 3, title: 'Corporate Launch Party', date: '2025-02-01', startTime: '18:00', endTime: '23:00', location: 'Downtown Convention Center', fee: 1500, status: 'pending' }
+  ],
+  invoices: [
+    { id: 1, gigId: 1, clientId: 1, invoiceNumber: 'INV-2025-001', amount: 800, status: 'paid', dueDate: '2025-01-15', issuedDate: '2025-01-01' },
+    { id: 2, gigId: 2, clientId: 2, invoiceNumber: 'INV-2025-002', amount: 1200, status: 'sent', dueDate: '2025-01-20', issuedDate: '2025-01-05' },
+    { id: 3, gigId: 3, clientId: 3, invoiceNumber: 'INV-2025-003', amount: 1500, status: 'draft', dueDate: '2025-02-05', issuedDate: '2025-01-10' }
+  ]
+};
+
 // Simple mobile-style app component
 const MobileApp = () => {
   const [currentRoute, setCurrentRoute] = useState('/');
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [appData, setAppData] = useState(mockData);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Demo credentials
     if (email === 'dj@gigpro.com' && password === 'demo123') {
       const mockUser = {
         id: 1,
         name: 'DJ Mike',
         email: 'dj@gigpro.com',
+        stageName: 'DJ Mike',
         businessName: 'Mike\'s DJ Services',
+        paymentTerms: 'Net 14 days',
+        paymentMethod: 'Bank Transfer',
+        paymentInstructions: 'Bank: Chase Bank, Acc: ****1234, Routing: 021000021',
+        logoUrl: null
       };
       setUser(mockUser);
       setCurrentRoute('/dashboard');
@@ -259,7 +282,12 @@ const MobileApp = () => {
       id: Date.now(),
       name,
       email,
-      businessName,
+      stageName: name,
+      businessName: businessName || `${name}'s DJ Services`,
+      paymentTerms: 'Net 14 days',
+      paymentMethod: 'Bank Transfer',
+      paymentInstructions: '',
+      logoUrl: null
     };
     setUser(newUser);
     setCurrentRoute('/dashboard');
@@ -271,16 +299,49 @@ const MobileApp = () => {
     setCurrentRoute('/');
   };
 
+  // Helper functions for data management
+  const getClientById = (id: number) => appData.clients.find(c => c.id === id);
+  const getGigById = (id: number) => appData.gigs.find(g => g.id === id);
+  const getInvoiceById = (id: number) => appData.invoices.find(i => i.id === id);
+
+  const addClient = (client: any) => {
+    const newClient = { ...client, id: Date.now() };
+    setAppData(prev => ({ ...prev, clients: [...prev.clients, newClient] }));
+    return newClient;
+  };
+
+  const addGig = (gig: any) => {
+    const newGig = { ...gig, id: Date.now() };
+    setAppData(prev => ({ ...prev, gigs: [...prev.gigs, newGig] }));
+    return newGig;
+  };
+
+  const addInvoice = (invoice: any) => {
+    const newInvoice = { ...invoice, id: Date.now(), invoiceNumber: `INV-2025-${String(Date.now()).slice(-3)}` };
+    setAppData(prev => ({ ...prev, invoices: [...prev.invoices, newInvoice] }));
+    return newInvoice;
+  };
+
+  const updateInvoiceStatus = (invoiceId: number, status: string) => {
+    setAppData(prev => ({
+      ...prev,
+      invoices: prev.invoices.map(i => i.id === invoiceId ? { ...i, status } : i)
+    }));
+  };
+
   // Simple routing
   const routes: Record<string, React.ComponentType> = {
-    '/': () => user ? <Dashboard user={user} logout={logout} /> : <Login login={login} setRoute={setCurrentRoute} isLoading={isLoading} />,
+    '/': () => user ? <Dashboard user={user} appData={appData} setRoute={setCurrentRoute} /> : <Login login={login} setRoute={setCurrentRoute} isLoading={isLoading} />,
     '/login': () => <Login login={login} setRoute={setCurrentRoute} isLoading={isLoading} />,
     '/register': () => <Register register={register} setRoute={setCurrentRoute} isLoading={isLoading} />,
-    '/dashboard': () => <Dashboard user={user} logout={logout} />,
-    '/calendar': Calendar,
-    '/clients': Clients,
-    '/invoices': Invoices,
+    '/dashboard': () => <Dashboard user={user} appData={appData} setRoute={setCurrentRoute} />,
+    '/calendar': () => <Calendar user={user} appData={appData} addGig={addGig} setRoute={setCurrentRoute} />,
+    '/clients': () => <Clients user={user} appData={appData} addClient={addClient} setRoute={setCurrentRoute} />,
+    '/invoices': () => <Invoices user={user} appData={appData} addInvoice={addInvoice} updateInvoiceStatus={updateInvoiceStatus} getClientById={getClientById} getGigById={getGigById} setRoute={setCurrentRoute} />,
     '/profile': () => <Profile user={user} logout={logout} />,
+    '/add-gig': () => <AddGig user={user} appData={appData} addGig={addGig} setRoute={setCurrentRoute} />,
+    '/add-client': () => <AddClient user={user} addClient={addClient} setRoute={setCurrentRoute} />,
+    '/create-invoice': () => <CreateInvoice user={user} appData={appData} addInvoice={addInvoice} getClientById={getClientById} getGigById={getGigById} setRoute={setCurrentRoute} />,
   };
 
   const CurrentPage = routes[currentRoute] || routes['/'];
@@ -455,7 +516,9 @@ const Login = ({ login, setRoute, isLoading }: any) => {
                 fontSize: '16px',
                 transition: 'border-color 0.3s',
                 outline: 'none',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                color: '#374151',
+                backgroundColor: '#ffffff'
               }}
               onFocus={(e) => e.target.style.borderColor = '#7c3aed'}
               onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
@@ -475,7 +538,9 @@ const Login = ({ login, setRoute, isLoading }: any) => {
                 fontSize: '16px',
                 transition: 'border-color 0.3s',
                 outline: 'none',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                color: '#374151',
+                backgroundColor: '#ffffff'
               }}
               onFocus={(e) => e.target.style.borderColor = '#7c3aed'}
               onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
@@ -613,7 +678,9 @@ const Register = ({ register, setRoute, isLoading }: any) => {
                 borderRadius: '12px',
                 fontSize: '16px',
                 outline: 'none',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                color: '#374151',
+                backgroundColor: '#ffffff'
               }}
               onFocus={(e) => e.target.style.borderColor = '#7c3aed'}
               onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
@@ -632,7 +699,9 @@ const Register = ({ register, setRoute, isLoading }: any) => {
                 borderRadius: '12px',
                 fontSize: '16px',
                 outline: 'none',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                color: '#374151',
+                backgroundColor: '#ffffff'
               }}
               onFocus={(e) => e.target.style.borderColor = '#7c3aed'}
               onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
@@ -651,7 +720,9 @@ const Register = ({ register, setRoute, isLoading }: any) => {
                 borderRadius: '12px',
                 fontSize: '16px',
                 outline: 'none',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                color: '#374151',
+                backgroundColor: '#ffffff'
               }}
               onFocus={(e) => e.target.style.borderColor = '#7c3aed'}
               onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
@@ -670,7 +741,9 @@ const Register = ({ register, setRoute, isLoading }: any) => {
                 borderRadius: '12px',
                 fontSize: '16px',
                 outline: 'none',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                color: '#374151',
+                backgroundColor: '#ffffff'
               }}
               onFocus={(e) => e.target.style.borderColor = '#7c3aed'}
               onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
@@ -726,106 +799,1123 @@ const Register = ({ register, setRoute, isLoading }: any) => {
   );
 };
 
-const Dashboard = ({ user, logout }: any) => (
-  <div style={{ padding: '20px', paddingBottom: '80px' }}>
-    <div style={{ backgroundColor: '#7c3aed', padding: '20px', borderRadius: '12px', color: 'white', marginBottom: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-        <h2 style={{ margin: 0, fontSize: '24px' }}>Welcome back, {user?.name?.split(' ')[0]}!</h2>
+const Dashboard = ({ user, appData, setRoute }: any) => {
+  const upcomingGigs = appData.gigs.filter((gig: any) => new Date(gig.date) >= new Date()).slice(0, 3);
+  const pendingInvoices = appData.invoices.filter((invoice: any) => invoice.status === 'sent' || invoice.status === 'overdue');
+  const overdueInvoices = appData.invoices.filter((invoice: any) => {
+    if (invoice.status === 'paid') return false;
+    return new Date(invoice.dueDate) < new Date();
+  });
+  
+  const totalRevenue = appData.invoices.filter((i: any) => i.status === 'paid').reduce((sum: number, i: any) => sum + i.amount, 0);
+  const pendingRevenue = pendingInvoices.reduce((sum: number, i: any) => sum + i.amount, 0);
+
+  return (
+    <div style={{ padding: '20px', paddingBottom: '80px' }}>
+      {/* Header */}
+      <div style={{ backgroundColor: '#7c3aed', padding: '20px', borderRadius: '12px', color: 'white', marginBottom: '20px' }}>
+        <h2 style={{ margin: 0, fontSize: '24px', marginBottom: '8px' }}>Welcome back, {user?.name?.split(' ')[0]}!</h2>
+        <p style={{ margin: 0, opacity: 0.8 }}>Here's your business overview</p>
+      </div>
+
+      {/* Quick Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ backgroundColor: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#64748b', fontWeight: '500' }}>Revenue (Paid)</h3>
+          <p style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#059669' }}>${totalRevenue.toLocaleString()}</p>
+        </div>
+        <div style={{ backgroundColor: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#64748b', fontWeight: '500' }}>Pending</h3>
+          <p style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', color: '#d97706' }}>${pendingRevenue.toLocaleString()}</p>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div style={{ marginBottom: '24px' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '12px' }}>Quick Actions</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <button
+            onClick={() => setRoute('/create-invoice')}
+            style={{
+              backgroundColor: '#7c3aed',
+              color: 'white',
+              border: 'none',
+              padding: '16px',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              textAlign: 'center'
+            }}
+          >
+            📄 Create Invoice
+          </button>
+          <button
+            onClick={() => setRoute('/add-gig')}
+            style={{
+              backgroundColor: '#059669',
+              color: 'white',
+              border: 'none',
+              padding: '16px',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              textAlign: 'center'
+            }}
+          >
+            🎵 Add Gig
+          </button>
+        </div>
+      </div>
+
+      {/* Alerts */}
+      {overdueInvoices.length > 0 && (
+        <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', padding: '16px', borderRadius: '12px', marginBottom: '20px' }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#dc2626', fontSize: '16px', fontWeight: '600' }}>⚠️ Overdue Invoices</h4>
+          <p style={{ margin: 0, color: '#991b1b', fontSize: '14px' }}>
+            You have {overdueInvoices.length} overdue invoice{overdueInvoices.length > 1 ? 's' : ''} totaling ${overdueInvoices.reduce((sum: number, i: any) => sum + i.amount, 0).toLocaleString()}
+          </p>
+        </div>
+      )}
+
+      {/* Upcoming Gigs */}
+      <div style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: '600', margin: 0 }}>Upcoming Gigs</h3>
+          <button
+            onClick={() => setRoute('/calendar')}
+            style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: '14px', cursor: 'pointer' }}
+          >
+            View All →
+          </button>
+        </div>
+        {upcomingGigs.length > 0 ? (
+          upcomingGigs.map((gig: any) => {
+            const client = appData.clients.find((c: any) => c.id === gig.clientId);
+            return (
+              <div key={gig.id} style={{ backgroundColor: 'white', padding: '16px', borderRadius: '12px', marginBottom: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600' }}>{gig.title}</h4>
+                    <p style={{ margin: '0 0 4px 0', color: '#64748b', fontSize: '14px' }}>{client?.name}</p>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '13px' }}>
+                      {new Date(gig.date).toLocaleDateString()} at {gig.startTime}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: '#059669' }}>${gig.fee}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            <p style={{ color: '#64748b', margin: 0 }}>No upcoming gigs scheduled</p>
+          </div>
+        )}
+      </div>
+
+      {/* Recent Invoices */}
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: '600', margin: 0 }}>Recent Invoices</h3>
+          <button
+            onClick={() => setRoute('/invoices')}
+            style={{ background: 'none', border: 'none', color: '#7c3aed', fontSize: '14px', cursor: 'pointer' }}
+          >
+            View All →
+          </button>
+        </div>
+        {appData.invoices.slice(0, 3).map((invoice: any) => {
+          const client = appData.clients.find((c: any) => c.id === invoice.clientId);
+          const statusColors = {
+            paid: '#059669',
+            sent: '#d97706',
+            draft: '#64748b',
+            overdue: '#dc2626'
+          };
+          return (
+            <div key={invoice.id} style={{ backgroundColor: 'white', padding: '16px', borderRadius: '12px', marginBottom: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600' }}>{invoice.invoiceNumber}</h4>
+                  <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>{client?.name}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 'bold' }}>${invoice.amount}</p>
+                  <span style={{ 
+                    fontSize: '12px', 
+                    fontWeight: '600', 
+                    color: statusColors[invoice.status as keyof typeof statusColors],
+                    backgroundColor: `${statusColors[invoice.status as keyof typeof statusColors]}20`,
+                    padding: '4px 8px',
+                    borderRadius: '4px'
+                  }}>
+                    {invoice.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// Calendar Component with Gig Management
+const Calendar = ({ user, appData, addGig, setRoute }: any) => {
+  const [selectedDate, setSelectedDate] = useState('');
+  const [viewMode, setViewMode] = useState('month');
+
+  const gigsThisMonth = appData.gigs.filter((gig: any) => {
+    const gigDate = new Date(gig.date);
+    const now = new Date();
+    return gigDate.getMonth() === now.getMonth() && gigDate.getFullYear() === now.getFullYear();
+  });
+
+  return (
+    <div style={{ padding: '20px', paddingBottom: '80px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Calendar</h2>
         <button
-          onClick={logout}
+          onClick={() => setRoute('/add-gig')}
           style={{
-            background: 'rgba(255,255,255,0.2)',
-            border: 'none',
+            backgroundColor: '#7c3aed',
             color: 'white',
-            padding: '8px 12px',
-            borderRadius: '6px',
-            fontSize: '12px',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: '600',
             cursor: 'pointer'
           }}
         >
-          Logout
+          + Add Gig
         </button>
       </div>
-      <p style={{ margin: 0, opacity: 0.8 }}>Here's your gig overview</p>
+
+      {/* This Month's Gigs */}
+      <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', marginBottom: '20px' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>This Month's Gigs ({gigsThisMonth.length})</h3>
+        {gigsThisMonth.length > 0 ? (
+          gigsThisMonth.map((gig: any) => {
+            const client = appData.clients.find((c: any) => c.id === gig.clientId);
+            return (
+              <div key={gig.id} style={{ 
+                padding: '16px', 
+                border: '1px solid #e2e8f0', 
+                borderRadius: '8px', 
+                marginBottom: '12px',
+                borderLeft: '4px solid #7c3aed'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '600' }}>{gig.title}</h4>
+                    <p style={{ margin: '0 0 4px 0', color: '#64748b', fontSize: '14px' }}>📍 {gig.location}</p>
+                    <p style={{ margin: '0 0 4px 0', color: '#64748b', fontSize: '14px' }}>👤 {client?.name}</p>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>
+                      🕐 {gig.startTime} - {gig.endTime}
+                    </p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 'bold', color: '#059669' }}>${gig.fee}</p>
+                    <div style={{ fontSize: '12px', color: '#64748b' }}>
+                      {new Date(gig.date).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <p style={{ color: '#64748b', textAlign: 'center', margin: '20px 0' }}>No gigs scheduled this month</p>
+        )}
+      </div>
+
+      {/* All Upcoming Gigs */}
+      <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>All Upcoming Gigs</h3>
+        {appData.gigs.filter((gig: any) => new Date(gig.date) >= new Date()).map((gig: any) => {
+          const client = appData.clients.find((c: any) => c.id === gig.clientId);
+          const isThisWeek = new Date(gig.date) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+          
+          return (
+            <div key={gig.id} style={{ 
+              padding: '12px', 
+              border: '1px solid #e2e8f0', 
+              borderRadius: '8px', 
+              marginBottom: '8px',
+              backgroundColor: isThisWeek ? '#f0f9ff' : 'transparent',
+              borderLeft: isThisWeek ? '4px solid #0ea5e9' : '1px solid #e2e8f0'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '600' }}>{gig.title}</h4>
+                  <p style={{ margin: 0, color: '#64748b', fontSize: '12px' }}>
+                    {new Date(gig.date).toLocaleDateString()} • {client?.name}
+                  </p>
+                </div>
+                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#059669' }}>${gig.fee}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
-    
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-      {[
-        { title: 'This Month\'s Gigs', value: '12', color: '#7c3aed' },
-        { title: 'Total Earnings', value: '$8,450', color: '#059669' },
-        { title: 'Pending Invoices', value: '3', color: '#dc2626' },
-        { title: 'Active Clients', value: '28', color: '#2563eb' },
-      ].map((stat, index) => (
-        <div key={index} style={{
-          backgroundColor: 'white',
-          padding: '16px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          borderLeft: `4px solid ${stat.color}`,
-        }}>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: stat.color, marginBottom: '8px' }}>
-            {stat.value}
-          </div>
-          <div style={{ fontSize: '12px', color: '#64748b' }}>{stat.title}</div>
+  );
+};
+
+// Clients Component with Full Management
+const Clients = ({ user, appData, addClient, setRoute }: any) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('all');
+
+  const filteredClients = appData.clients.filter((client: any) => {
+    const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         client.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === 'all' || client.type === filterType;
+    return matchesSearch && matchesType;
+  });
+
+  return (
+    <div style={{ padding: '20px', paddingBottom: '80px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Clients</h2>
+        <button
+          onClick={() => setRoute('/add-client')}
+          style={{
+            backgroundColor: '#7c3aed',
+            color: 'white',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer'
+          }}
+        >
+          + Add Client
+        </button>
+      </div>
+
+      {/* Search and Filter */}
+      <div style={{ backgroundColor: 'white', padding: '16px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', marginBottom: '20px' }}>
+        <div style={{ marginBottom: '12px' }}>
+          <input
+            type="text"
+            placeholder="Search clients..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              fontSize: '14px',
+              boxSizing: 'border-box'
+            }}
+          />
         </div>
-      ))}
-    </div>
-    
-    <div style={{
-      backgroundColor: 'white',
-      padding: '20px',
-      borderRadius: '12px',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    }}>
-      <h3 style={{ margin: '0 0 16px 0', fontSize: '18px' }}>Upcoming Gigs</h3>
-      {[
-        { title: 'Wedding Reception', date: 'Aug 8', location: 'Grand Hotel', fee: '$1,200' },
-        { title: 'Corporate Event', date: 'Aug 12', location: 'Convention Center', fee: '$800' },
-      ].map((gig, index) => (
-        <div key={index} style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '12px 0',
-          borderBottom: index < 1 ? '1px solid #e2e8f0' : 'none',
-        }}>
-          <div>
-            <div style={{ fontWeight: '600', marginBottom: '4px' }}>{gig.title}</div>
-            <div style={{ fontSize: '14px', color: '#64748b' }}>{gig.date} • {gig.location}</div>
-          </div>
-          <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#059669' }}>{gig.fee}</div>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {['all', 'Venue', 'Private', 'Promoter'].map(type => (
+            <button
+              key={type}
+              onClick={() => setFilterType(type)}
+              style={{
+                padding: '6px 12px',
+                border: filterType === type ? 'none' : '1px solid #e2e8f0',
+                backgroundColor: filterType === type ? '#7c3aed' : 'white',
+                color: filterType === type ? 'white' : '#64748b',
+                borderRadius: '6px',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              {type === 'all' ? 'All' : type}
+            </button>
+          ))}
         </div>
-      ))}
-    </div>
-  </div>
-);
+      </div>
 
-const Calendar = () => (
-  <div style={{ padding: '20px', paddingBottom: '80px' }}>
-    <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Calendar</h2>
-    <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-      <p style={{ color: '#64748b', textAlign: 'center' }}>📅 Calendar view coming soon with gig scheduling</p>
+      {/* Client List */}
+      <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
+          {filteredClients.length} Client{filteredClients.length !== 1 ? 's' : ''}
+        </h3>
+        {filteredClients.map((client: any) => {
+          const clientGigs = appData.gigs.filter((g: any) => g.clientId === client.id);
+          const clientInvoices = appData.invoices.filter((i: any) => i.clientId === client.id);
+          const totalPaid = clientInvoices.filter((i: any) => i.status === 'paid').reduce((sum: number, i: any) => sum + i.amount, 0);
+          
+          return (
+            <div key={client.id} style={{ 
+              padding: '16px', 
+              border: '1px solid #e2e8f0', 
+              borderRadius: '8px', 
+              marginBottom: '12px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                    <h4 style={{ margin: '0 8px 0 0', fontSize: '16px', fontWeight: '600' }}>{client.name}</h4>
+                    <span style={{
+                      fontSize: '10px',
+                      fontWeight: '600',
+                      color: '#7c3aed',
+                      backgroundColor: '#f3f4f6',
+                      padding: '2px 6px',
+                      borderRadius: '4px'
+                    }}>
+                      {client.type}
+                    </span>
+                  </div>
+                  <p style={{ margin: '0 0 4px 0', color: '#64748b', fontSize: '14px' }}>📧 {client.email}</p>
+                  <p style={{ margin: '0 0 8px 0', color: '#64748b', fontSize: '14px' }}>📱 {client.phone}</p>
+                  <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#64748b' }}>
+                    <span>🎵 {clientGigs.length} gigs</span>
+                    <span>💰 ${totalPaid.toLocaleString()} earned</span>
+                  </div>
+                  {client.notes && (
+                    <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#64748b', fontStyle: 'italic' }}>
+                      "{client.notes}"
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
-const Clients = () => (
-  <div style={{ padding: '20px', paddingBottom: '80px' }}>
-    <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Clients</h2>
-    <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-      <p style={{ color: '#64748b', textAlign: 'center' }}>👥 Client management coming soon</p>
-    </div>
-  </div>
-);
+// Invoices Component with Full Management
+const Invoices = ({ user, appData, addInvoice, updateInvoiceStatus, getClientById, getGigById, setRoute }: any) => {
+  const [statusFilter, setStatusFilter] = useState('all');
 
-const Invoices = () => (
-  <div style={{ padding: '20px', paddingBottom: '80px' }}>
-    <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>Invoices</h2>
-    <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-      <p style={{ color: '#64748b', textAlign: 'center' }}>📄 Invoice management coming soon</p>
+  const filteredInvoices = appData.invoices.filter((invoice: any) => {
+    return statusFilter === 'all' || invoice.status === statusFilter;
+  });
+
+  const statusColors = {
+    paid: '#059669',
+    sent: '#d97706',
+    draft: '#64748b',
+    overdue: '#dc2626'
+  };
+
+  return (
+    <div style={{ padding: '20px', paddingBottom: '80px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Invoices</h2>
+        <button
+          onClick={() => setRoute('/create-invoice')}
+          style={{
+            backgroundColor: '#7c3aed',
+            color: 'white',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '8px',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer'
+          }}
+        >
+          + Create Invoice
+        </button>
+      </div>
+
+      {/* Status Summary */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '12px', marginBottom: '20px' }}>
+        {[
+          { status: 'paid', label: 'Paid', count: appData.invoices.filter((i: any) => i.status === 'paid').length },
+          { status: 'sent', label: 'Sent', count: appData.invoices.filter((i: any) => i.status === 'sent').length },
+          { status: 'draft', label: 'Draft', count: appData.invoices.filter((i: any) => i.status === 'draft').length },
+          { status: 'overdue', label: 'Overdue', count: appData.invoices.filter((i: any) => i.status === 'overdue' || (i.status !== 'paid' && new Date(i.dueDate) < new Date())).length }
+        ].map(({ status, label, count }) => (
+          <button
+            key={status}
+            onClick={() => setStatusFilter(status)}
+            style={{
+              backgroundColor: statusFilter === status ? statusColors[status as keyof typeof statusColors] : 'white',
+              color: statusFilter === status ? 'white' : statusColors[status as keyof typeof statusColors],
+              border: `2px solid ${statusColors[status as keyof typeof statusColors]}`,
+              padding: '12px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              textAlign: 'center'
+            }}
+          >
+            <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{count}</div>
+            <div style={{ fontSize: '12px', marginTop: '4px' }}>{label}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* Filter Buttons */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        {['all', 'draft', 'sent', 'paid', 'overdue'].map(status => (
+          <button
+            key={status}
+            onClick={() => setStatusFilter(status)}
+            style={{
+              padding: '6px 12px',
+              border: statusFilter === status ? 'none' : '1px solid #e2e8f0',
+              backgroundColor: statusFilter === status ? '#7c3aed' : 'white',
+              color: statusFilter === status ? 'white' : '#64748b',
+              borderRadius: '6px',
+              fontSize: '12px',
+              cursor: 'pointer'
+            }}
+          >
+            {status === 'all' ? 'All' : status.charAt(0).toUpperCase() + status.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* Invoice List */}
+      <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
+          {filteredInvoices.length} Invoice{filteredInvoices.length !== 1 ? 's' : ''}
+        </h3>
+        {filteredInvoices.map((invoice: any) => {
+          const client = getClientById(invoice.clientId);
+          const gig = getGigById(invoice.gigId);
+          const isOverdue = invoice.status !== 'paid' && new Date(invoice.dueDate) < new Date();
+          const actualStatus = isOverdue ? 'overdue' : invoice.status;
+          
+          return (
+            <div key={invoice.id} style={{ 
+              padding: '16px', 
+              border: '1px solid #e2e8f0', 
+              borderRadius: '8px', 
+              marginBottom: '12px',
+              borderLeft: `4px solid ${statusColors[actualStatus as keyof typeof statusColors]}`
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                    <h4 style={{ margin: '0 8px 0 0', fontSize: '16px', fontWeight: '600' }}>{invoice.invoiceNumber}</h4>
+                    <span style={{
+                      fontSize: '10px',
+                      fontWeight: '600',
+                      color: statusColors[actualStatus as keyof typeof statusColors],
+                      backgroundColor: `${statusColors[actualStatus as keyof typeof statusColors]}20`,
+                      padding: '2px 6px',
+                      borderRadius: '4px'
+                    }}>
+                      {actualStatus.toUpperCase()}
+                    </span>
+                  </div>
+                  <p style={{ margin: '0 0 4px 0', color: '#64748b', fontSize: '14px' }}>👤 {client?.name}</p>
+                  {gig && <p style={{ margin: '0 0 4px 0', color: '#64748b', fontSize: '14px' }}>🎵 {gig.title}</p>}
+                  <p style={{ margin: '0 0 8px 0', color: '#64748b', fontSize: '14px' }}>
+                    📅 Due: {new Date(invoice.dueDate).toLocaleDateString()}
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {invoice.status === 'draft' && (
+                      <button
+                        onClick={() => updateInvoiceStatus(invoice.id, 'sent')}
+                        style={{
+                          backgroundColor: '#d97706',
+                          color: 'white',
+                          border: 'none',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Send
+                      </button>
+                    )}
+                    {(invoice.status === 'sent' || actualStatus === 'overdue') && (
+                      <button
+                        onClick={() => updateInvoiceStatus(invoice.id, 'paid')}
+                        style={{
+                          backgroundColor: '#059669',
+                          color: 'white',
+                          border: 'none',
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '10px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Mark Paid
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ margin: 0, fontSize: '18px', fontWeight: 'bold' }}>${invoice.amount}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
-  </div>
-);
+  );
+};
+
+// Add Gig Form
+const AddGig = ({ user, appData, addGig, setRoute }: any) => {
+  const [title, setTitle] = useState('');
+  const [date, setDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [location, setLocation] = useState('');
+  const [fee, setFee] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [notes, setNotes] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !date || !startTime || !location || !fee) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    const newGig = {
+      title,
+      date,
+      startTime,
+      endTime,
+      location,
+      fee: parseFloat(fee),
+      clientId: clientId ? parseInt(clientId) : null,
+      notes,
+      status: 'confirmed'
+    };
+
+    addGig(newGig);
+    setRoute('/calendar');
+  };
+
+  return (
+    <div style={{ padding: '20px', paddingBottom: '80px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+        <button
+          onClick={() => setRoute('/calendar')}
+          style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '12px' }}
+        >
+          ←
+        </button>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Add New Gig</h2>
+      </div>
+
+      <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Event Title *</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Wedding Reception, Corporate Party"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Date *</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Fee *</label>
+              <input
+                type="number"
+                value={fee}
+                onChange={(e) => setFee(e.target.value)}
+                placeholder="0"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Start Time *</label>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>End Time</label>
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Location *</label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g., Grand Hotel Ballroom, 123 Main St"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Client</label>
+            <select
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxSizing: 'border-box'
+              }}
+            >
+              <option value="">Select a client (optional)</option>
+              {appData.clients.map((client: any) => (
+                <option key={client.id} value={client.id}>{client.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Notes</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Special requests, equipment needs, etc."
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxSizing: 'border-box',
+                resize: 'vertical'
+              }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            style={{
+              width: '100%',
+              padding: '16px',
+              backgroundColor: '#7c3aed',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            Create Gig
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Add Client Form
+const AddClient = ({ user, addClient, setRoute }: any) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [type, setType] = useState('Private');
+  const [notes, setNotes] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name) {
+      alert('Please enter a client name');
+      return;
+    }
+
+    const newClient = {
+      name,
+      email,
+      phone,
+      type,
+      notes,
+      tags: [type.toLowerCase()]
+    };
+
+    addClient(newClient);
+    setRoute('/clients');
+  };
+
+  return (
+    <div style={{ padding: '20px', paddingBottom: '80px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+        <button
+          onClick={() => setRoute('/clients')}
+          style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '12px' }}
+        >
+          ←
+        </button>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Add New Client</h2>
+      </div>
+
+      <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Name *</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Client or venue name"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="client@email.com"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Phone</label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+1 555-123-4567"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Type</label>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxSizing: 'border-box'
+              }}
+            >
+              <option value="Private">Private Event</option>
+              <option value="Venue">Venue/Club</option>
+              <option value="Promoter">Event Promoter</option>
+              <option value="Corporate">Corporate</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Notes</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Payment preferences, special requirements, etc."
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxSizing: 'border-box',
+                resize: 'vertical'
+              }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            style={{
+              width: '100%',
+              padding: '16px',
+              backgroundColor: '#7c3aed',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            Add Client
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Create Invoice Form
+const CreateInvoice = ({ user, appData, addInvoice, getClientById, getGigById, setRoute }: any) => {
+  const [selectedGig, setSelectedGig] = useState('');
+  const [selectedClient, setSelectedClient] = useState('');
+  const [amount, setAmount] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [notes, setNotes] = useState('');
+
+  const handleGigSelect = (gigId: string) => {
+    setSelectedGig(gigId);
+    if (gigId) {
+      const gig = getGigById(parseInt(gigId));
+      if (gig) {
+        setSelectedClient(gig.clientId.toString());
+        setAmount(gig.fee.toString());
+        // Set due date to 14 days from today
+        const dueDate = new Date();
+        dueDate.setDate(dueDate.getDate() + 14);
+        setDueDate(dueDate.toISOString().split('T')[0]);
+      }
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClient || !amount || !dueDate) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    const newInvoice = {
+      gigId: selectedGig ? parseInt(selectedGig) : null,
+      clientId: parseInt(selectedClient),
+      amount: parseFloat(amount),
+      dueDate,
+      notes,
+      status: 'draft',
+      issuedDate: new Date().toISOString().split('T')[0]
+    };
+
+    addInvoice(newInvoice);
+    setRoute('/invoices');
+  };
+
+  return (
+    <div style={{ padding: '20px', paddingBottom: '80px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+        <button
+          onClick={() => setRoute('/invoices')}
+          style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', marginRight: '12px' }}
+        >
+          ←
+        </button>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Create Invoice</h2>
+      </div>
+
+      <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Select Gig (Optional)</label>
+            <select
+              value={selectedGig}
+              onChange={(e) => handleGigSelect(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxSizing: 'border-box'
+              }}
+            >
+              <option value="">Create custom invoice</option>
+              {appData.gigs.map((gig: any) => (
+                <option key={gig.id} value={gig.id}>
+                  {gig.title} - {new Date(gig.date).toLocaleDateString()} - ${gig.fee}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Client *</label>
+            <select
+              value={selectedClient}
+              onChange={(e) => setSelectedClient(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxSizing: 'border-box'
+              }}
+            >
+              <option value="">Select a client</option>
+              {appData.clients.map((client: any) => (
+                <option key={client.id} value={client.id}>{client.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Amount *</label>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Due Date *</label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '4px' }}>Payment Terms & Notes</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Payment instructions, additional details..."
+              rows={4}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '16px',
+                boxSizing: 'border-box',
+                resize: 'vertical'
+              }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            style={{
+              width: '100%',
+              padding: '16px',
+              backgroundColor: '#7c3aed',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            Create Invoice
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const Profile = ({ user, logout }: any) => (
   <div style={{ padding: '20px', paddingBottom: '80px' }}>
