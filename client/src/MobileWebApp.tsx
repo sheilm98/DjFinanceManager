@@ -1115,7 +1115,8 @@ const Clients = ({ user, appData, addClient, setRoute }: any) => {
               border: '1px solid #e2e8f0',
               borderRadius: '8px',
               fontSize: '14px',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              color: '#1f2937'
             }}
           />
         </div>
@@ -1424,7 +1425,8 @@ const AddGig = ({ user, appData, addGig, setRoute }: any) => {
                 border: '1px solid #e2e8f0',
                 borderRadius: '8px',
                 fontSize: '16px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                color: '#1f2937'
               }}
             />
           </div>
@@ -1442,7 +1444,8 @@ const AddGig = ({ user, appData, addGig, setRoute }: any) => {
                   border: '1px solid #e2e8f0',
                   borderRadius: '8px',
                   fontSize: '16px',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  color: '#1f2937'
                 }}
               />
             </div>
@@ -1459,7 +1462,8 @@ const AddGig = ({ user, appData, addGig, setRoute }: any) => {
                   border: '1px solid #e2e8f0',
                   borderRadius: '8px',
                   fontSize: '16px',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  color: '#1f2937'
                 }}
               />
             </div>
@@ -1478,7 +1482,8 @@ const AddGig = ({ user, appData, addGig, setRoute }: any) => {
                   border: '1px solid #e2e8f0',
                   borderRadius: '8px',
                   fontSize: '16px',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  color: '#1f2937'
                 }}
               />
             </div>
@@ -1494,7 +1499,8 @@ const AddGig = ({ user, appData, addGig, setRoute }: any) => {
                   border: '1px solid #e2e8f0',
                   borderRadius: '8px',
                   fontSize: '16px',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  color: '#1f2937'
                 }}
               />
             </div>
@@ -1513,7 +1519,8 @@ const AddGig = ({ user, appData, addGig, setRoute }: any) => {
                 border: '1px solid #e2e8f0',
                 borderRadius: '8px',
                 fontSize: '16px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                color: '#1f2937'
               }}
             />
           </div>
@@ -1529,7 +1536,8 @@ const AddGig = ({ user, appData, addGig, setRoute }: any) => {
                 border: '1px solid #e2e8f0',
                 borderRadius: '8px',
                 fontSize: '16px',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                color: '#1f2937'
               }}
             >
               <option value="">Select a client (optional)</option>
@@ -1553,7 +1561,8 @@ const AddGig = ({ user, appData, addGig, setRoute }: any) => {
                 borderRadius: '8px',
                 fontSize: '16px',
                 boxSizing: 'border-box',
-                resize: 'vertical'
+                resize: 'vertical',
+                color: '#1f2937'
               }}
             />
           </div>
