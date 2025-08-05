@@ -1,5 +1,6 @@
 import React, { useState, useEffect, createContext, useContext } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import jsPDF from 'jspdf';
 
 // Mock React Native dependencies for web
 const mockExpoRouter = {
@@ -244,6 +245,168 @@ const mockData = {
 };
 
 // Simple mobile-style app component
+// PDF Generation Function
+const generateInvoicePDF = (invoice: any, user: any, client: any, gig?: any) => {
+  const pdf = new jsPDF();
+  const pageWidth = pdf.internal.pageSize.width;
+  const pageHeight = pdf.internal.pageSize.height;
+  
+  // Colors
+  const primaryColor = [124, 58, 237]; // #7c3aed
+  const textColor = [31, 41, 55]; // #1f2937
+  const grayColor = [107, 114, 128]; // #6b7280
+  
+  // Header with DJ Business Info
+  pdf.setFillColor(...primaryColor);
+  pdf.rect(0, 0, pageWidth, 40, 'F');
+  
+  pdf.setTextColor(255, 255, 255);
+  pdf.setFontSize(24);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text(user.businessName || `${user.name}'s DJ Services`, 20, 25);
+  
+  pdf.setFontSize(12);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text(`DJ: ${user.name}`, 20, 35);
+  
+  // Invoice Title and Number
+  pdf.setTextColor(...textColor);
+  pdf.setFontSize(20);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('INVOICE', pageWidth - 60, 60);
+  
+  pdf.setFontSize(12);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text(`Invoice #: ${invoice.invoiceNumber}`, pageWidth - 80, 70);
+  pdf.text(`Date: ${new Date(invoice.issuedDate).toLocaleDateString()}`, pageWidth - 80, 80);
+  pdf.text(`Due Date: ${new Date(invoice.dueDate).toLocaleDateString()}`, pageWidth - 80, 90);
+  
+  // Bill To Section
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('BILL TO:', 20, 70);
+  
+  pdf.setFont('helvetica', 'normal');
+  let yPos = 80;
+  pdf.text(client.name, 20, yPos);
+  if (client.email) {
+    yPos += 10;
+    pdf.text(`Email: ${client.email}`, 20, yPos);
+  }
+  if (client.phone) {
+    yPos += 10;
+    pdf.text(`Phone: ${client.phone}`, 20, yPos);
+  }
+  
+  // Service Details
+  yPos += 30;
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('SERVICE DETAILS:', 20, yPos);
+  
+  // Table Header
+  yPos += 15;
+  pdf.setFillColor(248, 250, 252);
+  pdf.rect(20, yPos - 5, pageWidth - 40, 15, 'F');
+  
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Description', 25, yPos + 5);
+  pdf.text('Amount', pageWidth - 60, yPos + 5);
+  
+  // Service Row
+  yPos += 20;
+  pdf.setFont('helvetica', 'normal');
+  
+  let description = 'DJ Services';
+  if (gig) {
+    description = `DJ Services - ${gig.title}`;
+    if (gig.location) description += ` at ${gig.location}`;
+    if (gig.date) description += ` on ${new Date(gig.date).toLocaleDateString()}`;
+    if (gig.startTime && gig.endTime) description += ` (${gig.startTime} - ${gig.endTime})`;
+  }
+  
+  // Wrap long description
+  const splitDescription = pdf.splitTextToSize(description, pageWidth - 100);
+  pdf.text(splitDescription, 25, yPos);
+  
+  const descriptionHeight = splitDescription.length * 5;
+  pdf.text(`$${invoice.amount.toFixed(2)}`, pageWidth - 60, yPos);
+  
+  // Line under service
+  yPos += Math.max(10, descriptionHeight + 5);
+  pdf.setDrawColor(...grayColor);
+  pdf.line(20, yPos, pageWidth - 20, yPos);
+  
+  // Total Section
+  yPos += 20;
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(14);
+  pdf.text('TOTAL AMOUNT DUE:', pageWidth - 120, yPos);
+  pdf.setFontSize(16);
+  pdf.text(`$${invoice.amount.toFixed(2)}`, pageWidth - 60, yPos);
+  
+  // Payment Information
+  if (user.paymentInstructions) {
+    yPos += 30;
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('PAYMENT INSTRUCTIONS:', 20, yPos);
+    
+    yPos += 10;
+    pdf.setFont('helvetica', 'normal');
+    const paymentLines = pdf.splitTextToSize(user.paymentInstructions, pageWidth - 40);
+    pdf.text(paymentLines, 20, yPos);
+    yPos += paymentLines.length * 5;
+  }
+  
+  // Payment Terms
+  if (user.paymentTerms) {
+    yPos += 10;
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('PAYMENT TERMS:', 20, yPos);
+    
+    yPos += 10;
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(user.paymentTerms, 20, yPos);
+  }
+  
+  // Notes
+  if (invoice.notes) {
+    yPos += 20;
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('NOTES:', 20, yPos);
+    
+    yPos += 10;
+    pdf.setFont('helvetica', 'normal');
+    const notesLines = pdf.splitTextToSize(invoice.notes, pageWidth - 40);
+    pdf.text(notesLines, 20, yPos);
+    yPos += notesLines.length * 5;
+  }
+  
+  // Footer
+  const footerY = pageHeight - 30;
+  pdf.setTextColor(...grayColor);
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text('Thank you for your business!', pageWidth / 2, footerY, { align: 'center' });
+  
+  if (user.email) {
+    pdf.text(`Contact: ${user.email}`, pageWidth / 2, footerY + 8, { align: 'center' });
+  }
+  
+  // Save PDF
+  try {
+    const fileName = `Invoice_${invoice.invoiceNumber}_${client.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+    pdf.save(fileName);
+    
+    // Show success message
+    setTimeout(() => {
+      alert(`✅ Invoice PDF exported successfully!\nFile: ${fileName}`);
+    }, 100);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    alert('❌ Error generating PDF. Please try again.');
+  }
+};
+
 const MobileApp = () => {
   const [currentRoute, setCurrentRoute] = useState('/');
   const [user, setUser] = useState(null);
@@ -939,22 +1102,41 @@ const Dashboard = ({ user, appData, setRoute }: any) => {
           return (
             <div key={invoice.id} style={{ backgroundColor: 'white', padding: '16px', borderRadius: '12px', marginBottom: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
+                <div style={{ flex: 1 }}>
                   <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600' }}>{invoice.invoiceNumber}</h4>
                   <p style={{ margin: 0, color: '#64748b', fontSize: '14px' }}>{client?.name}</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 'bold' }}>${invoice.amount}</p>
-                  <span style={{ 
-                    fontSize: '12px', 
-                    fontWeight: '600', 
-                    color: statusColors[invoice.status as keyof typeof statusColors],
-                    backgroundColor: `${statusColors[invoice.status as keyof typeof statusColors]}20`,
-                    padding: '4px 8px',
-                    borderRadius: '4px'
-                  }}>
-                    {invoice.status.toUpperCase()}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
+                    <span style={{ 
+                      fontSize: '12px', 
+                      fontWeight: '600', 
+                      color: statusColors[invoice.status as keyof typeof statusColors],
+                      backgroundColor: `${statusColors[invoice.status as keyof typeof statusColors]}20`,
+                      padding: '4px 8px',
+                      borderRadius: '4px'
+                    }}>
+                      {invoice.status.toUpperCase()}
+                    </span>
+                    <button
+                      onClick={() => {
+                        const gig = appData.gigs.find((g: any) => g.id === invoice.gigId);
+                        generateInvoicePDF(invoice, user, client, gig);
+                      }}
+                      style={{
+                        backgroundColor: '#7c3aed',
+                        color: 'white',
+                        border: 'none',
+                        padding: '4px 6px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      📄
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1213,21 +1395,43 @@ const Invoices = ({ user, appData, addInvoice, updateInvoiceStatus, getClientByI
     <div style={{ padding: '20px', paddingBottom: '80px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Invoices</h2>
-        <button
-          onClick={() => setRoute('/create-invoice')}
-          style={{
-            backgroundColor: '#7c3aed',
-            color: 'white',
-            border: 'none',
-            padding: '8px 16px',
-            borderRadius: '8px',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer'
-          }}
-        >
-          + Create Invoice
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => setRoute('/create-invoice')}
+            style={{
+              backgroundColor: '#7c3aed',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            + Create Invoice
+          </button>
+          {filteredInvoices.length > 0 && (
+            <button
+              onClick={() => {
+                // Export all filtered invoices info
+                alert(`Found ${filteredInvoices.length} invoice(s). Use PDF button on individual invoices to export.`);
+              }}
+              style={{
+                backgroundColor: '#059669',
+                color: 'white',
+                border: 'none',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              📄 Export
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Status Summary */}
@@ -1317,7 +1521,7 @@ const Invoices = ({ user, appData, addInvoice, updateInvoiceStatus, getClientByI
                   <p style={{ margin: '0 0 8px 0', color: '#64748b', fontSize: '14px' }}>
                     📅 Due: {new Date(invoice.dueDate).toLocaleDateString()}
                   </p>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {invoice.status === 'draft' && (
                       <button
                         onClick={() => updateInvoiceStatus(invoice.id, 'sent')}
@@ -1350,6 +1554,24 @@ const Invoices = ({ user, appData, addInvoice, updateInvoiceStatus, getClientByI
                         Mark Paid
                       </button>
                     )}
+                    <button
+                      onClick={() => {
+                        const client = getClientById(invoice.clientId);
+                        const gig = getGigById(invoice.gigId);
+                        generateInvoicePDF(invoice, user, client, gig);
+                      }}
+                      style={{
+                        backgroundColor: '#7c3aed',
+                        color: 'white',
+                        border: 'none',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      📄 PDF
+                    </button>
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -1904,22 +2126,61 @@ const CreateInvoice = ({ user, appData, addInvoice, getClientById, getGigById, s
             />
           </div>
 
-          <button
-            type="submit"
-            style={{
-              width: '100%',
-              padding: '16px',
-              backgroundColor: '#7c3aed',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: 'pointer'
-            }}
-          >
-            Create Invoice
-          </button>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <button
+              type="submit"
+              style={{
+                padding: '16px',
+                backgroundColor: '#7c3aed',
+                color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Create Invoice
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                // Create and immediately export
+                if (!selectedClient || !amount || !dueDate) {
+                  alert('Please fill in all required fields first');
+                  return;
+                }
+                
+                const tempInvoice = {
+                  id: Date.now(),
+                  invoiceNumber: `INV-2025-${String(Date.now()).slice(-3)}`,
+                  gigId: selectedGig ? parseInt(selectedGig) : null,
+                  clientId: parseInt(selectedClient),
+                  amount: parseFloat(amount),
+                  dueDate,
+                  notes,
+                  status: 'draft',
+                  issuedDate: new Date().toISOString().split('T')[0]
+                };
+                
+                const client = getClientById(parseInt(selectedClient));
+                const gig = selectedGig ? getGigById(parseInt(selectedGig)) : null;
+                generateInvoicePDF(tempInvoice, user, client, gig);
+              }}
+              style={{
+                padding: '16px',
+                backgroundColor: '#059669',
+                color: 'white',
+                border: 'none',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              📄 Preview PDF
+            </button>
+          </div>
         </form>
       </div>
     </div>
